@@ -1,0 +1,7 @@
+{
+    "allowed":
+    [
+        "https://localhost:3000/launchEvent.js"
+    ]
+}
+

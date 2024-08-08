@@ -1,0 +1,15 @@
+{
+  "include": ["**/*"],
+  "exclude": ["**/__tests__/*"],
+  "compilerOptions": {
+    "lib": ["ES2016"],
+    "moduleResolution": "node",
+    "forceConsistentCasingInFileNames": true,
+    "composite": true,
+    "baseUrl": ".",
+    "strict": true,
+    "paths": {
+      "@/*": ["./*"]
+    }
+  }
+}

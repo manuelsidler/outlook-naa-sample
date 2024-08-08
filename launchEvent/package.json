@@ -1,0 +1,19 @@
+{
+  "name": "launchevent",
+  "version": "1.0.0",
+  "description": "",
+  "main": "launchEvent.js",
+  "scripts": {
+    "build": "vite build",
+    "build:watch": "vite build -w"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/office-js": "^1.0.361"
+  },
+  "dependencies": {
+    "@azure/msal-browser": "^3.20.0"
+  }
+}
