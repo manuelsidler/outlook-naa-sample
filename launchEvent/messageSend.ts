@@ -1,18 +1,12 @@
-import { createNestablePublicClientApplication, LogLevel } from '@azure/msal-browser'
+import { createNestablePublicClientApplication, IPublicClientApplication, LogLevel } from '@azure/msal-browser'
 
-export function onMessageSend(event: Office.MailboxEvent) {
-    getGraphAccessToken()
-        .then((accessToken) => console.log(accessToken))
-        .then(() => event.completed({ allowEvent: true }))
-        .catch((error) => {
-            console.log(error)
-            event.completed({ allowEvent: true })
-        })
-}
+let clientApp: IPublicClientApplication | undefined = undefined
+let clientAppInitialized = false
 
-function getGraphAccessToken(): Promise<string> {
-    return new Promise<string>((resolve, reject) => {
-        createNestablePublicClientApplication({
+async function initializeClientApp() {
+        if (clientAppInitialized) return
+
+        clientApp = await createNestablePublicClientApplication({
             auth: {
                 clientId: '45820bbb-d8e8-4c60-af7d-e8805407193a',
                 authority: 'https://login.microsoftonline.com/common'
@@ -40,46 +34,35 @@ function getGraphAccessToken(): Promise<string> {
                 }
             }
         })
-            .then((clientApp) => {
-                const scopes = ['Mail.ReadWrite']
-                const redirectUri = 'https://localhost:3000'
-                const loginHint = Office.context.mailbox.userProfile.emailAddress
 
-                const account = clientApp.getAccountByUsername(loginHint)
-                const acquireTokenSilent = account
-                    ? clientApp.acquireTokenSilent({
-                          scopes,
-                          account,
-                          redirectUri
-                      })
-                    : clientApp.ssoSilent({
-                          loginHint,
-                          scopes,
-                          redirectUri
-                      })
+        clientAppInitialized = true
+}
 
-                acquireTokenSilent
-                    .then((result) => resolve(result.accessToken))
-                    .catch((error) => {
-                        console.log('acquire token silently failed. Get by popup...')
-                        console.error(error)
+export async function onMessageSend(event: Office.MailboxEvent) {
+    try {
+        console.log('onMessageSend')
 
-                        clientApp
-                            .acquireTokenPopup({
-                                scopes,
-                                redirectUri
-                            })
-                            .then((popupResult) => resolve(popupResult.accessToken))
-                            .catch((error) => {
-                                console.log('acquire token by popup failed.')
-                                console.error(error)
-                                reject()
-                            })
-                    })
-            })
-            .catch((error) => {
-                console.error(error)
-                reject()
-            })
-    })
+        console.log('initializeClientApp')
+        await initializeClientApp()
+
+        console.log('getGraphAccessToken')
+        const accessToken = await getGraphAccessToken()
+        console.log('accessToken: ' + accessToken)
+
+        event.completed({ allowEvent: true })
+    } catch (error) {
+        console.error('Unable to get Graph access token: ' + error)
+    }
+}
+
+async function getGraphAccessToken() {
+    if (!clientApp) {
+        console.error('clientApp not initialized')
+        return ''
+    }
+
+    console.log('acquireTokenSilent')
+    const tokenRequest = { scopes: ['Mail.ReadWrite'] }
+    const account = await clientApp.acquireTokenSilent(tokenRequest)
+    return account.accessToken
 }
