@@ -1,16 +1,14 @@
 import { onMessageSend } from './messageSend'
 
-// IMPORTANT: The JavaScript code of event-based add-ins that run in Outlook on Windows only supports ECMAScript 2016 and earlier specifications
-// -> avoid using async/await
-// -> avoid using conditional (ternary) operator
+declare global {
+    let onMessageSendHandler: (event: Office.MailboxEvent) => void
+}
 
 // necessary for Mac
 Office.onReady(() => {})
 
-// *** Message Send Event ***
-function onMessageSendHandler(event: Office.MailboxEvent) {
-    onMessageSend(event)
-}
+// events must be defined globally to prevent esbuild from renaming them
+onMessageSendHandler = onMessageSend
 
 // IMPORTANT: To ensure your add-in is supported in the Outlook client on Windows, remember to map the event handler name specified in the manifest to its JavaScript counterpart.
 if (

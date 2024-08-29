@@ -10,7 +10,6 @@ let clientApp: IPublicClientApplication
 
 const loginHint = Office.context.mailbox.userProfile.emailAddress
 const scopes = ['Mail.ReadWrite']
-const redirectUri = 'https://localhost:3000'
 
 onMounted(async () => {
     const msalConfig = {
@@ -46,37 +45,29 @@ onMounted(async () => {
 })
 
 async function getGraphAccessToken() {
+    const authRequest = {
+        scopes,
+        loginHint
+    }
+
     try {
-        const authResult = await acquireTokenSilently()
+        console.log('acquire token silently')
+        const account = clientApp.getAccountByUsername(loginHint)
+        const authResult = account
+            ? await clientApp.acquireTokenSilent(authRequest)
+            : await clientApp.ssoSilent(authRequest)
         console.log(authResult.accessToken)
     } catch (error) {
         console.error('Unable to acquire token silently', error)
 
         try {
-            const authResult = await clientApp.acquireTokenPopup({
-                scopes,
-                redirectUri
-            })
+            console.log('acquire token by popup')
+            const authResult = await clientApp.acquireTokenPopup(authRequest)
             console.log(authResult.accessToken)
         } catch (error) {
             console.error('Unable to acquire token interactively', error)
         }
     }
-}
-
-async function acquireTokenSilently() {
-    const account = clientApp.getAccountByUsername(loginHint)
-    return account
-        ? await clientApp.acquireTokenSilent({
-              scopes,
-              account,
-              redirectUri
-          })
-        : await clientApp.ssoSilent({
-              loginHint,
-              scopes,
-              redirectUri
-          })
 }
 </script>
 
